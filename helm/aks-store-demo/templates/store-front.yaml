@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: store-front
+  namespace: {{ .Values.namespace }}
+
+spec:
+  replicas: {{ .Values.storeFront.replicaCount }}
+
+  selector:
+    matchLabels:
+      app: store-front
+
+  template:
+    metadata:
+      labels:
+        app: store-front
+
+    spec:
+      containers:
+      - name: store-front
+
+        image: "{{ .Values.storeFront.image.repository }}:{{ .Values.storeFront.image.tag }}"
+
+        ports:
+        - containerPort: 8080
+
+        resources:
+          requests:
+            cpu: {{ .Values.resources.requests.cpu }}
+            memory: {{ .Values.resources.requests.memory }}
+
+          limits:
+            cpu: {{ .Values.resources.limits.cpu }}
+            memory: {{ .Values.resources.limits.memory }}
+
+---
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: store-front
+  namespace: {{ .Values.namespace }}
+
+spec:
+  type: {{ .Values.service.type }}
+
+  selector:
+    app: store-front
+
+  ports:
+  - port: {{ .Values.service.port }}
+    targetPort: 8080

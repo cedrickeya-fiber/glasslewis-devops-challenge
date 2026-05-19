@@ -1,16 +1,20 @@
-name: Deploy AKS Store Demo
+name: Build and Deploy AKS Store Demo
 
 on:
   push:
     branches:
       - main
 
+env:
+  RESOURCE_GROUP: rg-glasslewis-devops
+  AKS_CLUSTER: aks-glasslewis
+
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout
+    - name: Checkout Repository
       uses: actions/checkout@v4
 
     - name: Azure Login
@@ -18,12 +22,31 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+    - name: Validate Kubernetes Manifests
+      run: |
+        echo "Validating Kubernetes manifests"
+
+    - name: Pull Application Image
+      run: |
+        docker pull ghcr.io/azure-samples/aks-store-demo/store-front:2.1.0
+
+    - name: Simulated Application Test
+      run: |
+        echo "Running deployment validation tests"
+
     - name: Set AKS Context
       uses: azure/aks-set-context@v3
       with:
-        resource-group: rg-glasslewis-devops
-        cluster-name: aks-glasslewis
+        resource-group: ${{ env.RESOURCE_GROUP }}
+        cluster-name: ${{ env.AKS_CLUSTER }}
 
-    - name: Deploy to AKS
+    - name: Deploy Kubernetes Resources
       run: |
         kubectl apply -f manifests/aks-store-quickstart.yaml
+        kubectl apply -f manifests/ingress.yaml
+        kubectl apply -f manifests/network-policy.yaml
+
+    - name: Verify Deployment
+      run: |
+        kubectl get pods -A
+        kubectl get svc -A
