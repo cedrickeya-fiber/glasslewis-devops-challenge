@@ -1,0 +1,29 @@
+name: Deploy AKS Store Demo
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Set AKS Context
+      uses: azure/aks-set-context@v3
+      with:
+        resource-group: rg-glasslewis-devops
+        cluster-name: aks-glasslewis
+
+    - name: Deploy to AKS
+      run: |
+        kubectl apply -f manifests/aks-store-quickstart.yaml
